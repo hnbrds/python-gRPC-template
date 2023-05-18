@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option go_package="sample_service/gateway";
+import "google/api/annotations.proto";
+
+package sample_service.sample_module;
+
+service SampleService {
+  rpc AddRequest (OperandMessage) returns (ResultResponse) {
+    option (google.api.http) = {
+      get: "/add/{operand_1}/{operand_2}"
+    };
+  };
+
+  rpc SubRequest (OperandMessage) returns (ResultResponse) {
+    option (google.api.http) = {
+      post: "/subtract"
+      body: "*"
+      additional_bindings {
+        post: "/SubRequest"
+        body: "*"
+      };
+    };
+  };
+};
+
+message OperandMessage {
+  int32 operand_1 = 1;
+  int32 operand_2 = 2;
+}
+
+message ResultResponse {
+  int32 result = 1;
+}

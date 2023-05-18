@@ -1,0 +1,9 @@
+# gRPC related modules
+# Specify the versions of gRPC modules yourself.
+grpcio
+grpcio-tools
+protobuf
+googleapis-common-protos
+
+# Modules for python service
+pyyaml
