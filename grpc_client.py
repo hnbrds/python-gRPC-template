@@ -25,7 +25,7 @@ def main(args):
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default="127.0.0.1", help="IP address")
-    parser.add_argument("--port", default=13271, help="Port number")
+    parser.add_argument("--port", default=13270, help="Port number")
     args = parser.parse_args()
     return args
 
