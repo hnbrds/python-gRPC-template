@@ -1,10 +1,18 @@
 #!/bin/bash
+# check if GOROOT is set
+if [[ -z "${GOROOT}" ]]; then
+  echo "ENV GOROOT is not set, please set environment path GOROOT"
+  exit 1
+fi
+
 # set go ENVPATH
 export GOPATH=$(go env GOPATH)
 export GOBIN=$GOPATH/bin
 export PATH=$GOROOT/bin:$GOBIN:$PATH
 mkdir -p $GOPATH/pkg
 mkdir -p $GOBIN
+# link project directory to GOPATH/src
+ln -s $PWD $GOROOT/src
 
 # Place four binaries in your $GOBIN
 [ ! -f $GOBIN/protoc-gen-grpc-gateway ] && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
@@ -19,6 +27,7 @@ fi
 [ ! -f $GOBIN/protoc-gen-go-grpc ] && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 # resolve go package
+rm -rf go.*
 go mod init your_service
 go mod tidy
 
