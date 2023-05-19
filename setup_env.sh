@@ -13,6 +13,8 @@ mkdir -p $GOPATH/pkg
 mkdir -p $GOBIN
 # link project directory to GOPATH/src
 ln -s $PWD $GOROOT/src
+# link generated file into swagger folder
+ln -s ../proto/gen/openapiv2/proto/sample.swagger.json ./swagger/swagger.json
 
 # Place four binaries in your $GOBIN
 [ ! -f $GOBIN/protoc-gen-grpc-gateway ] && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
@@ -28,7 +30,8 @@ fi
 
 # resolve go package
 rm -rf go.*
-go mod init your_service
+# TODO : change your_service -> {your service name}
+go mod init your_service/v2
 go mod tidy
 
 # compile proto

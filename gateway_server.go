@@ -1,22 +1,18 @@
 package main
 
 import (
+    "log"
     "context"
     "flag"
+    "net"
     "net/http"
-    "mime"
-    "io"
-    "strings"
 
-    "github.com/philips/grpc-gateway-example/pkg/ui/data/swagger"
-    "github.com/philips/go-bindata-assetfs"
-    pb "github.com/philips/grpc-gateway-example/echopb"
-    
-    "github.com/golang/glog"
+    "golang.org/x/sync/errgroup"
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
 
+    "github.com/soheilhy/cmux"
     // TODO : python-gRPC-template -> {your_project_folder_name}
     gw "python-gRPC-template/proto/gen/go/proto"
 )
@@ -29,50 +25,58 @@ var (
 )
 
 func serveSwagger(mux *http.ServeMux) {
-    mime.AddExtensionType(".svg", "image/svg+xml")
-
-    // Expose files in third_party/swagger-ui/ on <host>/swagger-ui
-    fileServer := http.FileServer(&assetfs.AssetFS{
-        Asset:    swagger.Asset,
-        AssetDir: swagger.AssetDir,
-        Prefix:   "third_party/swagger-ui",
-    })
     prefix := "/swagger-ui/"
-    mux.Handle(prefix, http.StripPrefix(prefix, fileServer))
+    // TODO : http.Dir({your swagger dist folder})
+    fs := http.FileServer(http.Dir("./swagger"))
+    mux.Handle(prefix, http.StripPrefix(prefix, fs))
 }
 
 
-func run() error {
+func grpcServe(listener net.Listener) error {
+    //not implemented
+}
+
+
+func httpServe(listener net.Listener) error {
     ctx := context.Background()
     ctx, cancel := context.WithCancel(ctx)
     defer cancel()
 
-
     mux := http.NewServeMux()
-    mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, req *http.Request) {
-        io.Copy(w, strings.NewReader(pb.Swagger))
-    })
-    // Register gRPC server endpoint
-    // Note: Make sure the gRPC server is running properly and accessible
     gwmux := runtime.NewServeMux()
     opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-    // TODO : change RegisterSampleServiceHandlerFromEndpoint -> Register{YourService}HandlerFromEndpoint
-    err := gw.RegisterSampleServiceHandlerFromEndpoint(ctx, gwmux,  *grpcServerEndpoint, opts)
+    err := gw.RegisterSampleServiceHandlerFromEndpoint(ctx, gwmux, *grpcServerEndpoint, opts)
+
     if err != nil {
-        return err
+        log.Fatal(err)
     }
 
     mux.Handle("/", gwmux)
     serveSwagger(mux)
-    // Start HTTP server (and proxy calls to gRPC server endpoint)
-    return http.ListenAndServe(":13270", mux)
+    s := &http.Server{ Handler : mux }
+    return s.Serve(listener)
 }
 
-func main() {
-    flag.Parse()
-    defer glog.Flush()
 
-    if err := run(); err != nil {
-        glog.Fatal(err)
+func main() {
+    ctx := context.Background()
+    ctx, cancel := context.WithCancel(ctx)
+    defer cancel()
+
+    // create listener for server
+    listener, err := net.Listen("tcp", ":13270")
+    if err != nil {
+        log.Fatal(err)
     }
+    mux := cmux.New(listener)
+
+    grpcListener := mux.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+    httpListener := mux.Match(cmux.HTTP1Fast())
+    
+    g := new(errgroup.Group)
+    g.Go(func() error { return grpcServe(grpcListener) })
+    g.Go(func() error { return httpServe(httpListener) })
+    g.Go(func() error { return mux.Serve() })
+
+    log.Println("RUN SERVER : ", g.Wait())
 }
