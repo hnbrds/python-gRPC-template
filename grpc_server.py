@@ -54,6 +54,7 @@ def parse_arguments():
 def init_logger():
     logger = logging.getLogger("gRPC SERVER")
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
