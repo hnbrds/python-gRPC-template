@@ -81,6 +81,7 @@ func httpServe(listener net.Listener) error {
     mux := http.NewServeMux()
     gwmux := runtime.NewServeMux()
     opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+    // TODO : Change service handler name
     err := gw.RegisterSampleServiceHandlerFromEndpoint(ctx, gwmux, *grpcServerEndpoint, opts)
 
     if err != nil {
