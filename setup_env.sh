@@ -1,4 +1,7 @@
 #!/bin/bash
+# Set your service name (= .proto file name)
+SERVICE_NAME=sample
+
 # check if GOROOT is set
 if [[ -z "${GOROOT}" ]]; then
   echo "ENV GOROOT is not set, please set environment path GOROOT"
@@ -14,7 +17,7 @@ mkdir -p $GOBIN
 # link project directory to GOPATH/src
 ln -s $PWD $GOROOT/src
 # link generated file into swagger folder
-ln -s ../proto/gen/openapiv2/proto/sample.swagger.json ./swagger/swagger.json
+ln -s ../proto/gen/openapiv2/proto/$SERVICE_NAME.swagger.json ./swagger/swagger.json
 
 # Place four binaries in your $GOBIN
 [ ! -f $GOBIN/protoc-gen-grpc-gateway ] && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
@@ -30,11 +33,9 @@ fi
 
 # resolve go package
 rm -rf go.*
-# TODO : change your_service -> {your service name}
-go mod init your_service/v2
+go mod init $SERVICE_NAME/v2
 go mod tidy
 
 # compile proto
 buf generate
-# TODO : change proto path -> {your proto path}
-python -m grpc_tools.protoc -I./proto --python_out=./proto --grpc_python_out=./proto ./proto/sample.proto
+python -m grpc_tools.protoc -I./proto --python_out=./proto --grpc_python_out=./proto ./proto/$SERVICE_NAME.proto
