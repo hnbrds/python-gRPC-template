@@ -23,7 +23,7 @@ var (
     // command-line options:
     // gRPC server endpoint
     // TODO : change port to match your service port
-    gatewayServerAddr = "localhost:13270"
+    gatewayServerAddr = ":13270"
     grpcServerAddr = "localhost:13271"
     // TODO : change swagger dir to your swagger dist directory
     swaggerDir = "./swagger"
